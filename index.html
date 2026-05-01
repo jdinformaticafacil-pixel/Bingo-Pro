@@ -5917,10 +5917,18 @@ function setLang(lang) {
     ['btn-lang-sk','cd-btn-lang-sk'].forEach(id => { const b=document.getElementById(id); if(b) b.style.cssText=lang==='sk'?ON:OFF; });
     const root = document.getElementById('html-root');
     if (root) root.lang = lang;
-    // Siempre actualizar vozLang según idioma seleccionado
+
+    // Actualizar idioma de voz según idioma UI
     if (lang === 'es') cfg.vozLang = 'es-ES';
     else if (lang === 'en') cfg.vozLang = 'en-US';
     else if (lang === 'sk') cfg.vozLang = 'sk-SK';
+
+    // Forzar reinicio de voces en móvil
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.getVoices();
+    }
+
     const vozLangSelect = document.getElementById('sel-voz-lang');
     if (vozLangSelect) vozLangSelect.value = cfg.vozLang;
     try { localStorage.setItem('bingo_lang', lang); } catch(e) {}
@@ -5931,7 +5939,7 @@ function setLang(lang) {
     if (document.getElementById('carton-modal').classList.contains('open')) {
         generarCarton();
     }
-    if (cdTimer && document.getElementById('countdown-overlay') && 
+    if (cdTimer && document.getElementById('countdown-overlay') &&
         !document.getElementById('countdown-overlay').classList.contains('hidden')) {
         const n = parseInt(document.getElementById('cd-number')?.textContent) || 30;
         const msgEl = document.getElementById('cd-msg');
