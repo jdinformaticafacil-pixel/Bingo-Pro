@@ -5917,11 +5917,10 @@ function setLang(lang) {
     ['btn-lang-sk','cd-btn-lang-sk'].forEach(id => { const b=document.getElementById(id); if(b) b.style.cssText=lang==='sk'?ON:OFF; });
     const root = document.getElementById('html-root');
     if (root) root.lang = lang;
-    if (cfg && cfg.vozLang) {
-        if (lang==='en' && cfg.vozLang.startsWith('es')) cfg.vozLang='en-US';
-        else if (lang==='es' && cfg.vozLang.startsWith('en')) cfg.vozLang='es-ES';
-        else if (lang==='sk') cfg.vozLang='sk-SK';
-    }
+    // Siempre actualizar vozLang según idioma seleccionado
+    if (lang === 'es') cfg.vozLang = 'es-ES';
+    else if (lang === 'en') cfg.vozLang = 'en-US';
+    else if (lang === 'sk') cfg.vozLang = 'sk-SK';
     const vozLangSelect = document.getElementById('sel-voz-lang');
     if (vozLangSelect) vozLangSelect.value = cfg.vozLang;
     try { localStorage.setItem('bingo_lang', lang); } catch(e) {}
@@ -6321,92 +6320,6 @@ function getCDMsgs() {
 }
 
 /* ================================================ ARRANQUE ================================================ */
-/* ══════════════════════════════════════════════════════════════
-   CÓDIGO SECRETO — Solo para uso del desarrollador
-   Escribe "JESUSPRO" en cualquier pantalla (sin campo de texto activo)
-   O toca el logo/título 7 veces seguidas en móvil
-   ══════════════════════════════════════════════════════════════ */
-(function() {
-    const SECRET    = 'JESUSPRO';
-    const STORAGE_K = '_bpro_dev';
-    let buffer = '';
-    let tapCount = 0, tapTimer = null;
-
-    function activarModoDesarrollador() {
-        isPremium = true;
-        aplicarLimitaciones();
-        // Guardar en localStorage para que persista
-        try { localStorage.setItem(STORAGE_K, '1'); } catch(e) {}
-        // Feedback discreto — solo un pequeño brillo en el header
-        const hdr = document.querySelector('.header-bar');
-        if (hdr) {
-            hdr.style.transition = 'box-shadow 0.4s';
-            hdr.style.boxShadow  = '0 0 24px 4px gold';
-            setTimeout(() => { hdr.style.boxShadow = ''; }, 1200);
-        }
-        console.log('%c🔑 Modo desarrollador activado', 'color:gold;font-weight:bold;font-size:14px;');
-    }
-
-    function desactivarModoDesarrollador() {
-        isPremium = false;
-        aplicarLimitaciones();
-        try { localStorage.removeItem(STORAGE_K); } catch(e) {}
-        const hdr = document.querySelector('.header-bar');
-        if (hdr) {
-            hdr.style.transition = 'box-shadow 0.4s';
-            hdr.style.boxShadow  = '0 0 24px 4px #ef4444';
-            setTimeout(() => { hdr.style.boxShadow = ''; }, 1200);
-        }
-    }
-
-    // ── Teclado: detectar secuencia "JESUSPRO" ──────────────────
-    document.addEventListener('keydown', function(e) {
-        // No activar si hay un input/textarea activo
-        const tag = document.activeElement && document.activeElement.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-        buffer += e.key.toUpperCase();
-        if (buffer.length > SECRET.length) buffer = buffer.slice(-SECRET.length);
-        if (buffer === SECRET) {
-            buffer = '';
-            if (isPremium) {
-                desactivarModoDesarrollador();
-            } else {
-                activarModoDesarrollador();
-            }
-        }
-    });
-
-    // ── Toque en logo (móvil): 7 toques en menos de 3s ─────────
-    window.addEventListener('DOMContentLoaded', function() {
-        const logo = document.querySelector('.header-bar span:first-child');
-        if (!logo) return;
-        logo.addEventListener('click', function() {
-            tapCount++;
-            clearTimeout(tapTimer);
-            tapTimer = setTimeout(() => { tapCount = 0; }, 3000);
-            if (tapCount >= 7) {
-                tapCount = 0;
-                if (isPremium) {
-                    desactivarModoDesarrollador();
-                } else {
-                    activarModoDesarrollador();
-                }
-            }
-        });
-    });
-
-    // ── Restaurar al cargar si estaba activado ──────────────────
-    window.addEventListener('load', function() {
-        try {
-            if (localStorage.getItem(STORAGE_K) === '1') {
-                isPremium = true;
-                aplicarLimitaciones();
-            }
-        } catch(e) {}
-    });
-})();
-/* ══════════════════════════════════════════════════════════════ */
-
 window.onload = () => {
     try {
         const s = localStorage.getItem('bingo_cfg');
