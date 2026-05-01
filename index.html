@@ -6343,6 +6343,59 @@ function getCDMsgs() {
 }
 
 /* ================================================ ARRANQUE ================================================ */
+
+/* ── CÓDIGO SECRETO DESARROLLADOR ──────────────────────────────
+   Escribe "JESUSPRO" (teclado, sin campo activo)
+   O toca el título 🎱 BINGO PRO 7 veces en menos de 3s (móvil)
+   ─────────────────────────────────────────────────────────────*/
+(function() {
+    const SECRET = 'JESUSPRO';
+    const KEY    = '_bpro_dev';
+    let buf = '', taps = 0, tapT = null;
+
+    function activar() {
+        isPremium = true;
+        aplicarLimitaciones();
+        try { localStorage.setItem(KEY, '1'); } catch(e) {}
+        const hdr = document.querySelector('.header-bar');
+        if (hdr) { hdr.style.transition='box-shadow 0.4s'; hdr.style.boxShadow='0 0 24px 6px gold'; setTimeout(()=>hdr.style.boxShadow='',1200); }
+    }
+    function desactivar() {
+        isPremium = false;
+        aplicarLimitaciones();
+        try { localStorage.removeItem(KEY); } catch(e) {}
+        const hdr = document.querySelector('.header-bar');
+        if (hdr) { hdr.style.transition='box-shadow 0.4s'; hdr.style.boxShadow='0 0 24px 6px #ef4444'; setTimeout(()=>hdr.style.boxShadow='',1200); }
+    }
+    function toggle() { isPremium ? desactivar() : activar(); }
+
+    // Teclado: secuencia JESUSPRO
+    document.addEventListener('keydown', function(e) {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+        buf += e.key.toUpperCase();
+        if (buf.length > SECRET.length) buf = buf.slice(-SECRET.length);
+        if (buf === SECRET) { buf = ''; toggle(); }
+    });
+
+    // Móvil: 7 toques en el título en menos de 3s
+    window.addEventListener('DOMContentLoaded', function() {
+        const logo = document.querySelector('.header-bar span:first-child');
+        if (!logo) return;
+        logo.addEventListener('click', function() {
+            taps++;
+            clearTimeout(tapT);
+            tapT = setTimeout(() => { taps = 0; }, 3000);
+            if (taps >= 7) { taps = 0; toggle(); }
+        });
+    });
+
+    // Restaurar al cargar si estaba activo
+    window.addEventListener('load', function() {
+        try { if (localStorage.getItem(KEY)==='1') { isPremium=true; aplicarLimitaciones(); } } catch(e) {}
+    });
+})();
+/* ─────────────────────────────────────────────────────────────*/
 window.onload = () => {
     try {
         const s = localStorage.getItem('bingo_cfg');
