@@ -1280,6 +1280,21 @@
             background:rgba(16,185,129,0.3)!important;
             border-color:#10b981!important; color:#6ee7b7!important;
         }
+        
+        /* Eslovaco: reducir fuente botones para evitar desbordamiento */
+        html:lang(sk) .ctrl-btn .btn-label,
+        html[lang="sk"] .ctrl-btn .btn-label {
+            font-size: clamp(6px, 0.85vmin, 9px);
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+        }
+        @media (max-width: 480px) {
+            html:lang(sk) .ctrl-btn .btn-label,
+            html[lang="sk"] .ctrl-btn .btn-label {
+                font-size: 6px;
+                letter-spacing: -0.3px;
+            }
+        }
         </style>
 </head>
 <body>
