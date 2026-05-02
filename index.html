@@ -774,25 +774,42 @@
             .window { padding: 4px; gap: 3px; border-radius: 6px; }
             .bingo-grid { gap: 2px; padding: 4px; border-radius: 6px; }
             .side-panel {
-                flex-direction: column; max-width: 100%; min-width: 0;
+                flex-direction: column;
+                max-width: 100%; min-width: 0;
                 flex: none; padding: 4px; gap: 3px; border-radius: 6px;
+                max-height: 42vh; overflow-y: auto;
             }
             .visor-box { flex: 0 0 auto; padding: 5px; }
             .num-grande { width: clamp(40px,11vmin,58px); height: clamp(40px,11vmin,58px); font-size: clamp(18px,6vmin,28px); margin-bottom: 3px; }
             .btn-sacar { min-height: clamp(32px,9vmin,44px); font-size: clamp(11px,2.5vmin,14px); }
-            /* 4 columnas uniformes en móvil */
-            .controls-grid { grid-template-columns: repeat(4, 1fr); gap: 3px; }
-            .ctrl-btn { min-height: 40px; border-radius: 8px; }
-            .ctrl-btn .btn-icon { font-size: 14px; }
-            .ctrl-btn .btn-label { font-size: 7.5px; letter-spacing: 0.2px; }
-            /* BINGO y LÍNEA: span 2 cols cada uno en móvil */
-            .ctrl-bingo { grid-column: span 2; min-height: 44px; }
-            .ctrl-linea { grid-column: span 2; min-height: 44px; }
-            .ctrl-bingo .btn-icon, .ctrl-linea .btn-icon { font-size: 18px; }
+            .controls-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 3px; width: 100%; box-sizing: border-box;
+            }
+            .ctrl-btn {
+                min-height: 44px; border-radius: 8px;
+                padding: 6px 2px; white-space: normal;
+                word-break: break-word; overflow: hidden;
+            }
+            .ctrl-btn .btn-icon { font-size: 16px; }
+            .ctrl-btn .btn-label {
+                font-size: 8px; letter-spacing: 0.2px;
+                display: block; line-height: 1.2;
+                max-width: 100%; overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .ctrl-bingo { grid-column: span 2; min-height: 48px; }
+            .ctrl-linea { grid-column: span 2; min-height: 48px; }
+            .ctrl-bingo .btn-icon, .ctrl-linea .btn-icon { font-size: 20px; }
             .ctrl-bingo .btn-label, .ctrl-linea .btn-label { font-size: 11px; font-weight: 900; }
-            #btn-auto { min-height: 42px; font-size: 13px; }
-            .header-bar { font-size: 10px; padding: 4px 8px; }
+            #btn-auto { min-height: 48px; font-size: 13px; grid-column: 1 / -1; }
+            .header-bar { font-size: 10px; padding: 4px 8px; flex-wrap: wrap; gap: 5px; }
             .status { font-size: 9px; padding: 3px 8px; }
+            .main-content { flex-direction: column; }
+            .fs-header-row { flex-wrap: wrap; justify-content: center; }
+            .fs-header-btns { flex-wrap: wrap; justify-content: center; }
+            .fs-btn { padding: 6px 10px; font-size: 10px; }
         }
         @media (max-width: 900px) and (orientation: landscape) {
             .side-panel { min-width: 140px; max-width: 190px; padding: 6px; gap: 4px; }
@@ -1279,6 +1296,14 @@
         .fx-dw-btn.fx-playing {
             background:rgba(16,185,129,0.3)!important;
             border-color:#10b981!important; color:#6ee7b7!important;
+        }
+        
+        /* Evitar desbordamiento de botones en móvil */
+        @media (max-width: 600px) {
+            .controls-grid { overflow-x: hidden; }
+            .ctrl-btn { overflow: hidden; text-overflow: ellipsis; }
+            .ctrl-btn .btn-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+            .header-bar { flex-wrap: wrap; justify-content: center; text-align: center; }
         }
         </style>
 </head>
@@ -2132,25 +2157,31 @@ function testVoice() {
 }
 
 
+function getOptimalVoiceLang() {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (cfg.vozLang === 'sk-SK' && isMobile) return 'es-ES';
+    return cfg.vozLang;
+}
+
 function hablarNumero(num) {
     if (!cfg.voz || !('speechSynthesis' in window)) return;
     const preset = VOICE_PRESETS[cfg.voiceStyle || 0];
     const utt = new SpeechSynthesisUtterance(String(num));
-    utt.lang = cfg.vozLang;
+    const langToUse = getOptimalVoiceLang();
+    utt.lang   = langToUse;
     utt.volume = cfg.volGeneral * (preset.volume || 1.0);
     utt.rate   = preset.rate   || 1.0;
     utt.pitch  = preset.pitch  || 1.0;
-    
-    // Intentar seleccionar voz femenina del idioma configurado
-    const voces = speechSynthesis.getVoices();
-    const langCode = cfg.vozLang.split('-')[0];
-    const vozFemenina = voces.find(v => v.lang.startsWith(langCode) && /female|mujer|woman|femenin/i.test(v.name))
-                     || voces.find(v => v.lang.startsWith(langCode) && /google|microsoft/i.test(v.name))
-                     || voces.find(v => v.lang.startsWith(langCode));
-    if (vozFemenina) utt.voice = vozFemenina;
-    
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utt);
+    _getVoces(voces => {
+        const langCode = langToUse.split('-')[0];
+        let voz = voces.find(v => v.lang.startsWith(langCode) && /female|mujer|woman|femenin/i.test(v.name))
+               || voces.find(v => v.lang.startsWith(langCode) && /google|microsoft/i.test(v.name))
+               || voces.find(v => v.lang.startsWith(langCode));
+        if (!voz && langToUse !== 'es-ES') voz = voces.find(v => v.lang.startsWith('es'));
+        if (voz) utt.voice = voz;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utt);
+    });
 }
 
 let _appVoces = null;
@@ -5814,12 +5845,12 @@ const TRANSLATIONS = {
         'speech_3': 'Tri',
         'speech_2': 'Dva',
         'speech_1': 'Jeden',
-        'speech_start': 'Nech sa hra začína.',
-        'speech_bingo': 'Bingo. Máme bingo. Gratulujeme.',
-        'speech_linea': 'Línia. Línia dokončená. Gratulujeme.',
-        'speech_won_self': 'Bingo. Gratulujeme ',
+        'speech_start': 'Nech sa hra začína!',
+        'speech_bingo': 'BINGO! Máme bingo! Gratulujeme!',
+        'speech_linea': 'LÍNIA! Línia dokončená! Gratulujeme!',
+        'speech_won_self': 'BINGO! Gratulujeme ',
         'speech_won_self2': '! Vyhrali ste hru!',
-        'speech_won_other': 'Bingo. Vyhral ',
+        'speech_won_other': 'BINGO! Vyhral ',
         'speech_won_other2': '! Gratulujeme! Koniec hry.',
         // Winner overlay
         'winner_new_game': '🎉 Nová hra',
@@ -6017,12 +6048,13 @@ function applyTranslations() {
         const btn = document.getElementById('fx-btn-' + i);
         const defaultES = fxDefaultsES[i];
         const defaultEN = fxDefaultsEN[i];
-        // Only auto-translate if current name matches one of the defaults
-        if (btn && (fx.nombre === defaultES || fx.nombre === defaultEN)) {
+        if (btn && (fx.nombre === defaultES || fx.nombre === defaultEN || fx.nombre === (defaultES||'').toUpperCase())) {
             const newName = currentLang === 'en' ? defaultEN : defaultES;
             fx.nombre = newName;
             btn.textContent = newName;
         }
+        const btnDw = document.getElementById('fxd-' + i);
+        if (btnDw && btnDw.textContent !== fx.nombre) btnDw.textContent = fx.nombre;
     });
 
     // Balls label in status bar
